@@ -83,7 +83,20 @@ def model(img, mask, dims):
 
     out = tf.layers.conv3d(out, filters=1, kernel_size=1, kernel_initializer=init, padding="same")
 
-    simg_out = tf.nn.sigmoid(out, name="out")
+    sigm_out = tf.nn.sigmoid(out, name="prob")
+
+    threshold = tf.multiply(tf.ones_like(mask, dtype=tf.float32), 0.5)
+    pred = tf.greater(sigm_out, threshold, "pred")
+    mask_bool = tf.greater(tf.cast(mask, dtype=tf.float32), threshold)
+
+    _and = tf.logical_and(pred, mask_bool)
+    _or = tf.logical_or(pred, mask_bool)
+
+    _and = tf.reduce_sum(tf.cast(_and, tf.float32), axis=[1, 2, 3, 4])
+    _or = tf.reduce_sum(tf.cast(_or, tf.float32), axis=[1, 2, 3, 4])
+
+    iou = tf.reduce_mean(_and / _or)
+    tf.summary.scalar("iou", iou)
 
     loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.cast(mask, tf.float32), logits=out)
     loss = tf.reduce_mean(loss)
