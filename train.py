@@ -1,4 +1,5 @@
 import tensorflow as tf
+import subprocess
 import sys
 import numpy as np
 
@@ -51,35 +52,51 @@ def model(img, mask, dims):
 
     training = tf.placeholder_with_default(True, shape=[], name="training")
 
-    input_ = tf.placeholder_with_default(img, shape=[None, 256, 256, 256, 1], name="img")
+    input_ = tf.placeholder_with_default(img, shape=[None, SIZE, SIZE, SIZE, 1], name="img")
     dims = tf.placeholder_with_default(dims, shape=[None, 3], name="dim")
 
-    out = input_
+    out = tf.cast(input_, dtype=tf.float32)
     
     out = tf.layers.conv3d(out, filters=8, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
     out = tf.layers.max_pooling3d(out, pool_size=2, strides=2)
 
-    out = tf.layers.conv3d(out, filters=8, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.dropout(out, rate=0.3, training=training)
+
+    out = tf.layers.conv3d(out, filters=16, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
     out = tf.layers.max_pooling3d(out, pool_size=2, strides=2)
 
-    out = tf.layers.conv3d(out, filters=8, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.dropout(out, rate=0.3, training=training)
+
+    out = tf.layers.conv3d(out, filters=32, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
     out = tf.layers.max_pooling3d(out, pool_size=2, strides=2)
 
-    out = tf.layers.conv3d_transpose(out, filters=8, kernel_size=3, strides=2, kernel_initializer=init, padding="same", use_bias=False)
-    out = tf.layers.conv3d_transpose(out, filters=8, kernel_size=3, strides=2, kernel_initializer=init, padding="same", use_bias=False)
-    out = tf.layers.conv3d_transpose(out, filters=8, kernel_size=3, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    # loss = None
+    out = tf.layers.conv3d_transpose(out, filters=32, kernel_size=3, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    # tf.summary.scalar("loss", loss)
+    out = tf.layers.conv3d_transpose(out, filters=16, kernel_size=3, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.layers.dropout(out, rate=0.3, training=training)
+
+    out = tf.layers.conv3d_transpose(out, filters=8, kernel_size=3, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.layers.dropout(out, rate=0.3, training=training)
+
+    out = tf.layers.conv3d(out, filters=1, kernel_size=1, kernel_initializer=init, padding="same")
+
+    simg_out = tf.nn.sigmoid(out, name="out")
+
+    loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.cast(mask, tf.float32), logits=out)
+    loss = tf.reduce_mean(loss)
+
+    tf.summary.scalar("loss", loss)
     
-    # update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    # with tf.control_dependencies(update_ops):
-    #     upd = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):
+        upd = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
         
-    # merged = tf.summary.merge_all()
+    merged = tf.summary.merge_all()
     
-    return training, img, mask, out
+    return training, img, mask, out, merged, upd
 
 
 def load_iterators():
@@ -116,7 +133,7 @@ def run():
 
     handle, training_iterator, validation_iterator, next_element = load_iterators()
 
-    training, img, mask, out = model(*next_element)
+    training, img, mask, out, merged, upd = model(*next_element)
 
     saver = tf.train.Saver(max_to_keep=2)
 
@@ -133,24 +150,23 @@ def run():
     i = 0
 
     spinner = Halo(text='Training', spinner='dots')
+    subprocess.Popen(["tensorboard", "--logdir", "./logs", "--port", "6006", "--host", "0.0.0.0"])
 
     spinner.start()
     while True:
-        i, o = sess.run([img, out], feed_dict={handle: training_handle})
-        print(i.shape)
-        print(o.shape)
-        # train_writer.add_summary(m, i)
+        m, _ = sess.run([merged, upd], feed_dict={handle: training_handle})
+        train_writer.add_summary(m, i)
 
-        # if i % 100 == 0:
-        #     m = sess.run(merged, feed_dict={training: False, handle: validation_handle})
-        #     val_writer.add_summary(m, i)
-        #     val_writer.flush()
+        if i % 100 == 0:
+            m = sess.run(merged, feed_dict={training: False, handle: validation_handle})
+            val_writer.add_summary(m, i)
+            val_writer.flush()
 
-        # if i % 1000 == 0 and i > 0:
-        #     # Save model
-        #     saver.save(sess, "./models/model.ckpt", global_step=i)
+        if i % 1000 == 0 and i > 0:
+            # Save model
+            saver.save(sess, "./models/model.ckpt", global_step=i)
 
-        # i+=1
+        i+=1
 
     spinner.stop()
 

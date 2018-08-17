@@ -6,10 +6,8 @@ import random
 import re
 from skimage.transform import resize
 
-OUTPUT = "."
-DATASET_DIR = "../data/CC359/"
 
-from const import SIZE
+from const import *
 
 
 def int64_feature(value):
@@ -50,7 +48,7 @@ def parse_example(img_path, mask_path):
     img_np = img_np.astype(np.uint8)
 
     boolean_mask = np.zeros_like(mask_np, dtype=np.uint8)
-    boolean_mask[mask_np > 0.5] = 255
+    boolean_mask[mask_np > 0.5] = 1
 
     tf_ex = tf.train.Example(features=tf.train.Features(feature={
             'dims': int64_list_feature(dims),
@@ -63,7 +61,7 @@ def parse_example(img_path, mask_path):
 
 def process_dataset(p=0.9):
     img_dir = os.path.join(DATASET_DIR, "Original")
-    mask_dir = os.path.join(DATASET_DIR, "Skull-stripping-masks", "STAPLE")
+    mask_dir = os.path.join(DATASET_DIR, "STAPLE")
 
     train_writer = tf.python_io.TFRecordWriter(os.path.join(OUTPUT, "train.tfrecord"))
     val_writer = tf.python_io.TFRecordWriter(os.path.join(OUTPUT, "val.tfrecord"))
