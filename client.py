@@ -30,11 +30,13 @@ class Extractor:
         self.pred = g.get_tensor_by_name("pred:0")
 
     def run(self, image):
+        shape = image.shape
         img = resize(image, (SIZE, SIZE, SIZE))
         img = (img / np.max(img))
         img = np.reshape(img, [1, SIZE, SIZE, SIZE, 1])
 
-        prob = self.sess.run(self.prob, feed_dict={self.training: False, self.img: img})
+        prob = self.sess.run(self.prob, feed_dict={self.training: False, self.img: img}).squeeze()
+        prob = resize(prob, (shape))
         return prob
 
 
@@ -44,12 +46,17 @@ def run(model):
 
 if __name__ == "__main__":
     img = nib.load(sys.argv[1])
+    affine = img.affine
     img = img.get_fdata()
 
     extractor = Extractor()
     
+    import time
+
+    now = time.time()
     prob = extractor.run(img)
+    print(time.time() - now)
     brain = 1 * (prob > 0.5)
 
-    brain = nib.Nifti1Image(brain, np.eye(4))
+    brain = nib.Nifti1Image(brain, affine)
     nib.save(brain, "brain.nii")
