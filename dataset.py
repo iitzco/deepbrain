@@ -57,6 +57,21 @@ def transpose_img(perm, img, mask, dims):
     return transposed_img, transposed_mask, dims
 
 
+# All flips is 2^n combination, being n the axis. For each axis, perform flip or not.
+# That's how you get (L-R, T-B, P-A), (L-R, T-B, P-A), (L-R, B-T, P-A)... (left, right, top, bottom, posterior, anterior)
+def add_all_flips(dataset, axes, index, list_to_fill):
+    if index == len(axes):
+        list_to_fill.append(dataset)
+        return
+
+    # Call without flip
+    add_all_flips(dataset, axes, index+1, list_to_fill)
+
+    # Call with flip
+    flipped_dataset = dataset.map(lambda i, m, d: flip_img(axes[index], i, m, d))
+    add_all_flips(flipped_dataset, axes, index+1, list_to_fill)
+
+
 def load_all_datasets():
 
     dataset_cc359_train = load_dataset(CC359_TRAIN)
@@ -78,12 +93,14 @@ def load_all_datasets():
         aux_val.append(dataset_val.map(lambda i, m, d: transpose_img(each, i, m, d)))
 
     for d in range(len(aux_train)):
-        for j in [0, 1, 2]:
-            aux_train.append(aux_train[d].map(lambda i, m, d: flip_img(j, i, m, d)))
+        aux = []
+        add_all_flips(aux_train[d], [0, 1, 2], 0, aux)
+        aux_train.extend(aux)
 
     for d in range(len(aux_val)):
-        for j in [0, 1, 2]:
-            aux_val.append(aux_val[d].map(lambda i, m, d: flip_img(j, i, m, d)))
+        aux = []
+        add_all_flips(aux_val[d], [0, 1, 2], 0, aux)
+        aux_val.extend(aux)
 
     for d in aux_train[1:]:
         dataset_train = dataset_train.concatenate(d)
