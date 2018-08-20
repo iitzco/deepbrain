@@ -2,48 +2,13 @@ import tensorflow as tf
 import subprocess
 import sys
 import numpy as np
-
 from halo import Halo
 
 DATASET_TRAIN = "./train.tfrecord"
 DATASET_VAL = "./val.tfrecord"
 
 from const import SIZE
-
-def decode(serialized_example):
-    features = tf.parse_single_example(serialized_example,
-                                       features={
-                                           'dims': tf.FixedLenFeature([3], tf.int64),
-                                           'img': tf.FixedLenFeature([], tf.string),
-                                           'mask': tf.FixedLenFeature([], tf.string),
-                                       })
-
-    dims = features['dims']
-
-    img = tf.decode_raw(features['img'], tf.uint8)
-    mask = tf.decode_raw(features['mask'], tf.uint8)
-
-    aux = tf.constant([SIZE, SIZE, SIZE])
-    img = tf.reshape(img, shape=aux)
-    mask = tf.reshape(mask, shape=aux)
-
-    img = tf.expand_dims(img, axis=-1)
-    mask = tf.expand_dims(mask, axis=-1)
-
-    return img, mask, dims
-
-
-def normalize(img, mask, dims):
-    img = tf.divide(tf.cast(img, tf.float32), 255)
-    return img, mask, dims
-
-
-def load_dataset(filename, size=None):
-    dataset = tf.data.TFRecordDataset(filename)
-    dataset = dataset.map(decode)
-    dataset = dataset.map(normalize)
-    
-    return dataset
+from dataset import load_all_datasets
 
 
 def model(img, mask, dims):
@@ -112,11 +77,8 @@ def model(img, mask, dims):
     return training, img, mask, out, merged, upd
 
 
-def load_iterators():
+def load_iterators(train_dataset, val_dataset):
     batch_size = 2
-
-    train_dataset = load_dataset(DATASET_TRAIN)
-    val_dataset = load_dataset(DATASET_VAL)
 
     train_dataset = train_dataset.shuffle(batch_size)
     train_dataset = train_dataset.repeat()
@@ -144,7 +106,9 @@ def load_iterators():
 def run():
     tf.reset_default_graph()
 
-    handle, training_iterator, validation_iterator, next_element = load_iterators()
+    train_dataset, val_dataset = load_all_datasets()
+
+    handle, training_iterator, validation_iterator, next_element = load_iterators(train_dataset, val_dataset)
 
     training, img, mask, out, merged, upd = model(*next_element)
 
