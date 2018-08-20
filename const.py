@@ -1,4 +1,7 @@
 SIZE = 128
 
 OUTPUT = "."
-DATASET_DIR = "/home/ivanitz/Data/cc359/"
+
+CC359_DATASET_DIR = "/home/ivanitz/Data/cc359/"
+
+NFBS_DATASET_DIR = "../data/NFBS_Dataset/"
