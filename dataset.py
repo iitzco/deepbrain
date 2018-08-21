@@ -30,6 +30,7 @@ def load_dataset(filename, size=None):
     dataset = tf.data.TFRecordDataset(filename)
     dataset = dataset.map(decode)
     dataset = dataset.map(normalize)
+    dataset = dataset.map(expand_dims)
 
     return dataset
 
@@ -88,7 +89,7 @@ def load_all_datasets():
     dataset_train = dataset_cc359_train.concatenate(dataset_nfbs_train)
     dataset_val = dataset_cc359_val.concatenate(dataset_nfbs_val)
 
-    swapaxes = [[0, 2, 1], [2, 0, 1], [2, 1, 0], [1, 0, 2], [1, 2, 0]]
+    swapaxes = [[0, 2, 1, 3], [2, 0, 1, 3], [2, 1, 0, 3], [1, 0, 2, 3], [1, 2, 0, 3]]
 
     aux_train = [dataset_train]
     aux_val = [dataset_val]
@@ -97,24 +98,21 @@ def load_all_datasets():
         aux_train.append(dataset_train.map(lambda i, m, d: transpose_img(each, i, m, d)))
         aux_val.append(dataset_val.map(lambda i, m, d: transpose_img(each, i, m, d)))
 
-    for d in range(len(aux_train)):
-        aux = []
-        add_all_flips(aux_train[d], [0, 1, 2], 0, aux)
-        aux_train.extend(aux)
+    # for d in range(len(aux_train)):
+    #     aux = []
+    #     add_all_flips(aux_train[d], [0, 1, 2], 0, aux)
+    #     aux_train.extend(aux)
 
-    for d in range(len(aux_val)):
-        aux = []
-        add_all_flips(aux_val[d], [0, 1, 2], 0, aux)
-        aux_val.extend(aux)
+    # for d in range(len(aux_val)):
+    #     aux = []
+    #     add_all_flips(aux_val[d], [0, 1, 2], 0, aux)
+    #     aux_val.extend(aux)
+
 
     for d in aux_train[1:]:
         dataset_train = dataset_train.concatenate(d)
 
     for d in aux_val[1:]:
         dataset_val = dataset_val.concatenate(d)
-
-
-    dataset_train = dataset_train.map(expand_dims)
-    dataset_val = dataset_val.map(expand_dims)
 
     return dataset_train, dataset_val

@@ -63,7 +63,7 @@ def model(img, mask, dims):
     pred_sum = tf.reduce_sum(tf.cast(pred, tf.float32), axis=[1, 2, 3, 4])
     mask_bool_sum = tf.reduce_sum(tf.cast(mask_bool, tf.float32), axis=[1, 2, 3, 4])
 
-    dice = tf.reduce_sum(2*_and / (pred_sum + mask_bool_sum))
+    dice = tf.reduce_mean(2*_and / (pred_sum + mask_bool_sum))
     tf.summary.scalar("dice", dice)
 
     loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.cast(mask, tf.float32), logits=out)
