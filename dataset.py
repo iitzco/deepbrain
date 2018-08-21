@@ -42,8 +42,9 @@ def expand_dims(img, mask, dims):
 
 
 def flip_img(axis, img, mask, dims):
-    flipped_img = tf.reverse(img, axis=axis)
-    flipped_mask = tf.reverse(mask, axis=axis)
+    aux = tf.constant([axis])
+    flipped_img = tf.reverse(img, axis=aux)
+    flipped_mask = tf.reverse(mask, axis=aux)
 
     return flipped_img, flipped_mask, dims
 
@@ -52,7 +53,8 @@ def transpose_img(perm, img, mask, dims):
     transposed_img = tf.transpose(img, perm=perm)
     transposed_mask = tf.transpose(mask, perm=perm)
 
-    dims = [dims[perm[0]], dims[perm[1]], dims[perm[2]]]
+    # Shape is SIZE ^3, so no need for dims change
+    # dims = [dims[perm[0]], dims[perm[1]], dims[perm[2]]]
 
     return transposed_img, transposed_mask, dims
 
@@ -72,8 +74,11 @@ def add_all_flips(dataset, axes, index, list_to_fill):
     add_all_flips(flipped_dataset, axes, index+1, list_to_fill)
 
 
-def load_all_datasets():
+def test(img, mask, dim):
+    return img, mask, dim
 
+
+def load_all_datasets():
     dataset_cc359_train = load_dataset(CC359_TRAIN)
     dataset_cc359_val = load_dataset(CC359_VAL)
 
@@ -107,5 +112,9 @@ def load_all_datasets():
 
     for d in aux_val[1:]:
         dataset_val = dataset_val.concatenate(d)
+
+
+    dataset_train = dataset_train.map(expand_dims)
+    dataset_val = dataset_val.map(expand_dims)
 
     return dataset_train, dataset_val
