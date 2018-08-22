@@ -75,8 +75,17 @@ def add_all_flips(dataset, axes, index, list_to_fill):
     add_all_flips(flipped_dataset, axes, index+1, list_to_fill)
 
 
-def test(img, mask, dim):
-    return img, mask, dim
+# Change implementation because of performance issues.
+def add_all_flips2(dataset, axes, index, final_dataset):
+    if index == len(axes):
+        return final_dataset.concatenate(dataset)
+
+    # Call without flip
+    final_dataset = add_all_flips2(dataset, axes, index+1, final_dataset)
+
+    # Call with flip
+    flipped_dataset = dataset.map(lambda i, m, d: flip_img(axes[index], i, m, d))
+    return add_all_flips2(flipped_dataset, axes, index+1, final_dataset)
 
 
 def load_all_datasets():
@@ -108,11 +117,16 @@ def load_all_datasets():
     #     add_all_flips(aux_val[d], [0, 1, 2], 0, aux)
     #     aux_val.extend(aux)
 
+    for d in range(len(aux_train)):
+        aux_train[d] = add_all_flips2(aux_train[d], [0, 1, 2], 0, aux_train[d])
 
-    for d in aux_train[1:]:
+    for d in range(len(aux_val)):
+        aux_val[d] = add_all_flips2(aux_val[d], [0, 1, 2], 0, aux_val[d])
+
+    for d in aux_train:
         dataset_train = dataset_train.concatenate(d)
 
-    for d in aux_val[1:]:
+    for d in aux_val:
         dataset_val = dataset_val.concatenate(d)
 
     return dataset_train, dataset_val
