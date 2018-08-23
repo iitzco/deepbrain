@@ -4,9 +4,6 @@ import sys
 import numpy as np
 from halo import Halo
 
-DATASET_TRAIN = "./train.tfrecord"
-DATASET_VAL = "./val.tfrecord"
-
 from const import SIZE
 from dataset import load_all_datasets
 
@@ -23,27 +20,48 @@ def model(img, mask, dims):
     out = tf.cast(input_, dtype=tf.float32)
     
     out = tf.layers.conv3d(out, filters=8, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=8, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+
+    conv1 = out
+
     out = tf.layers.max_pooling3d(out, pool_size=2, strides=2)
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
     out = tf.layers.conv3d(out, filters=16, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=16, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+
+    conv2 = out
+
     out = tf.layers.max_pooling3d(out, pool_size=2, strides=2)
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
     out = tf.layers.conv3d(out, filters=32, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+
+    conv3 = out
+
     out = tf.layers.max_pooling3d(out, pool_size=2, strides=2)
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
     out = tf.layers.conv3d_transpose(out, filters=32, kernel_size=3, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.concat((out, conv3), axis=-1)
+    out = tf.layers.conv3d(out, filters=32, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
     out = tf.layers.conv3d_transpose(out, filters=16, kernel_size=3, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.concat((out, conv2), axis=-1)
+    out = tf.layers.conv3d(out, filters=16, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
     out = tf.layers.conv3d_transpose(out, filters=8, kernel_size=3, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.concat((out, conv1), axis=-1)
+    out = tf.layers.conv3d(out, filters=8, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
     out = tf.layers.conv3d(out, filters=1, kernel_size=1, kernel_initializer=init, padding="same")
@@ -63,6 +81,12 @@ def model(img, mask, dims):
     iou = tf.reduce_mean(_and / _or)
     tf.summary.scalar("iou", iou)
 
+    pred_sum = tf.reduce_sum(tf.cast(pred, tf.float32), axis=[1, 2, 3, 4])
+    mask_bool_sum = tf.reduce_sum(tf.cast(mask_bool, tf.float32), axis=[1, 2, 3, 4])
+
+    dice = tf.reduce_mean(2*_and / (pred_sum + mask_bool_sum))
+    tf.summary.scalar("dice", dice)
+
     loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.cast(mask, tf.float32), logits=out)
     loss = tf.reduce_mean(loss)
 
@@ -78,7 +102,7 @@ def model(img, mask, dims):
 
 
 def load_iterators(train_dataset, val_dataset):
-    batch_size = 2
+    batch_size = 5
 
     train_dataset = train_dataset.shuffle(batch_size)
     train_dataset = train_dataset.repeat()

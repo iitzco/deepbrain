@@ -30,6 +30,7 @@ def load_dataset(filename, size=None):
     dataset = tf.data.TFRecordDataset(filename)
     dataset = dataset.map(decode)
     dataset = dataset.map(normalize)
+    dataset = dataset.map(expand_dims)
 
     return dataset
 
@@ -42,8 +43,9 @@ def expand_dims(img, mask, dims):
 
 
 def flip_img(axis, img, mask, dims):
-    flipped_img = tf.reverse(img, axis=axis)
-    flipped_mask = tf.reverse(mask, axis=axis)
+    aux = tf.constant([axis])
+    flipped_img = tf.reverse(img, axis=aux)
+    flipped_mask = tf.reverse(mask, axis=aux)
 
     return flipped_img, flipped_mask, dims
 
@@ -52,7 +54,8 @@ def transpose_img(perm, img, mask, dims):
     transposed_img = tf.transpose(img, perm=perm)
     transposed_mask = tf.transpose(mask, perm=perm)
 
-    dims = [dims[perm[0]], dims[perm[1]], dims[perm[2]]]
+    # Shape is SIZE ^3, so no need for dims change
+    # dims = [dims[perm[0]], dims[perm[1]], dims[perm[2]]]
 
     return transposed_img, transposed_mask, dims
 
@@ -72,8 +75,20 @@ def add_all_flips(dataset, axes, index, list_to_fill):
     add_all_flips(flipped_dataset, axes, index+1, list_to_fill)
 
 
-def load_all_datasets():
+# Change implementation because of performance issues.
+def add_all_flips2(dataset, axes, index, final_dataset):
+    if index == len(axes):
+        return final_dataset.concatenate(dataset)
 
+    # Call without flip
+    final_dataset = add_all_flips2(dataset, axes, index+1, final_dataset)
+
+    # Call with flip
+    flipped_dataset = dataset.map(lambda i, m, d: flip_img(axes[index], i, m, d))
+    return add_all_flips2(flipped_dataset, axes, index+1, final_dataset)
+
+
+def load_all_datasets():
     dataset_cc359_train = load_dataset(CC359_TRAIN)
     dataset_cc359_val = load_dataset(CC359_VAL)
 
@@ -83,7 +98,7 @@ def load_all_datasets():
     dataset_train = dataset_cc359_train.concatenate(dataset_nfbs_train)
     dataset_val = dataset_cc359_val.concatenate(dataset_nfbs_val)
 
-    swapaxes = [[0, 2, 1], [2, 0, 1], [2, 1, 0], [1, 0, 2], [1, 2, 0]]
+    swapaxes = [[0, 2, 1, 3], [2, 0, 1, 3], [2, 1, 0, 3], [1, 0, 2, 3], [1, 2, 0, 3]]
 
     aux_train = [dataset_train]
     aux_val = [dataset_val]
@@ -92,20 +107,26 @@ def load_all_datasets():
         aux_train.append(dataset_train.map(lambda i, m, d: transpose_img(each, i, m, d)))
         aux_val.append(dataset_val.map(lambda i, m, d: transpose_img(each, i, m, d)))
 
+    # for d in range(len(aux_train)):
+    #     aux = []
+    #     add_all_flips(aux_train[d], [0, 1, 2], 0, aux)
+    #     aux_train.extend(aux)
+
+    # for d in range(len(aux_val)):
+    #     aux = []
+    #     add_all_flips(aux_val[d], [0, 1, 2], 0, aux)
+    #     aux_val.extend(aux)
+
     for d in range(len(aux_train)):
-        aux = []
-        add_all_flips(aux_train[d], [0, 1, 2], 0, aux)
-        aux_train.extend(aux)
+        aux_train[d] = add_all_flips2(aux_train[d], [0, 1, 2], 0, aux_train[d])
 
     for d in range(len(aux_val)):
-        aux = []
-        add_all_flips(aux_val[d], [0, 1, 2], 0, aux)
-        aux_val.extend(aux)
+        aux_val[d] = add_all_flips2(aux_val[d], [0, 1, 2], 0, aux_val[d])
 
-    for d in aux_train[1:]:
+    for d in aux_train:
         dataset_train = dataset_train.concatenate(d)
 
-    for d in aux_val[1:]:
+    for d in aux_val:
         dataset_val = dataset_val.concatenate(d)
 
     return dataset_train, dataset_val
