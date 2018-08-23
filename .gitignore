@@ -1,3 +1,5 @@
+*.tfrecord
+
 models/
 logs/
 backup_models/
