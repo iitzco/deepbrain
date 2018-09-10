@@ -95,8 +95,14 @@ def load_all_datasets():
     dataset_nfbs_train = load_dataset(NFBS_TRAIN)
     dataset_nfbs_val = load_dataset(NFBS_VAL)
 
+    dataset_adni_train = load_dataset(ADNI_TRAIN)
+    dataset_adni_val = load_dataset(ADNI_VAL)
+
     dataset_train = dataset_cc359_train.concatenate(dataset_nfbs_train)
     dataset_val = dataset_cc359_val.concatenate(dataset_nfbs_val)
+
+    dataset_train = dataset_train.concatenate(dataset_adni_train)
+    dataset_val = dataset_val.concatenate(dataset_adni_val)
 
     swapaxes = [[0, 2, 1, 3], [2, 0, 1, 3], [2, 1, 0, 3], [1, 0, 2, 3], [1, 2, 0, 3]]
 
