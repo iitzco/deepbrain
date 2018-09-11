@@ -56,7 +56,7 @@ if __name__ == "__main__":
     now = time.time()
     prob = extractor.run(img)
     print(time.time() - now)
-    brain = 1 * (prob > 0.5)
+    brain = 1 * (prob > 0.3)
 
     brain = nib.Nifti1Image(brain, affine)
     nib.save(brain, "brain.nii")
