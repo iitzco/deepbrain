@@ -1,0 +1,3 @@
+nibabel
+scikit-image
+tensorflow
