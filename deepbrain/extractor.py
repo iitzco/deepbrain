@@ -25,12 +25,12 @@ class Extractor:
 
     def run(self, image):
         shape = image.shape
-        img = resize(image, (self.SIZE, self.SIZE, self.SIZE))
+        img = resize(image, (self.SIZE, self.SIZE, self.SIZE), mode='constant', anti_aliasing=True)
         img = (img / np.max(img))
         img = np.reshape(img, [1, self.SIZE, self.SIZE, self.SIZE, 1])
 
         prob = self.sess.run(self.prob, feed_dict={self.training: False, self.img: img}).squeeze()
-        prob = resize(prob, (shape))
+        prob = resize(prob, (shape), mode='constant', anti_aliasing=True)
         return prob
 
 
