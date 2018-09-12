@@ -7,9 +7,24 @@ class Extractor:
 
     def __init__(self):
         self.SIZE = 128
-        self.load()
+        self.load_pb()
 
-    def load(self):
+    def load_pb(self):
+        graph = tf.Graph()
+        self.sess = tf.Session(graph=graph)
+        with tf.gfile.FastGFile("deepbrain/models/graph.pb", 'rb') as f:
+            graph_def = tf.GraphDef()
+            graph_def.ParseFromString(f.read())
+            with self.sess.graph.as_default():
+                tf.import_graph_def(graph_def)
+
+        self.img = graph.get_tensor_by_name("import/img:0")
+        self.training = graph.get_tensor_by_name("import/training:0")
+        self.dim = graph.get_tensor_by_name("import/dim:0")
+        self.prob = graph.get_tensor_by_name("import/prob:0")
+        self.pred = graph.get_tensor_by_name("import/pred:0")
+
+    def load_ckpt(self):
         self.sess = tf.Session()
         ckpt_path = tf.train.latest_checkpoint("./deepbrain/models/")
         saver = tf.train.import_meta_graph('{}.meta'.format(ckpt_path))

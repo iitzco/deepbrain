@@ -28,7 +28,7 @@ def run(img_path, output_dir, p=0.5):
 
     now = time.time()
     prob = extractor.run(img)
-    print("Extraction time: {0:.2f}".format(time.time() - now))
+    print("Extraction time: {0:.2f} secs.".format(time.time() - now))
     mask = prob > p
     brain_mask = (1 * mask).astype(np.uint8)
     brain_mask = nib.Nifti1Image(brain_mask, affine)
