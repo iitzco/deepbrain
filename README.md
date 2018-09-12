@@ -1,5 +1,8 @@
 # DeepBrain
 
+[![PyPI - Version](https://img.shields.io/pypi/v/omniduct.svg)](https://pypi.org/project/deepbrain/)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/deepbrain.svg)
+
 > Brain image processing tools using Deep Learning focused on speed and accuracy.
 
 ### How to install
