@@ -1,6 +1,10 @@
 import tensorflow as tf
 import numpy as np
 from skimage.transform import resize
+import os
+
+PB_FILE = os.path.join(os.path.dirname(__file__), "models", "graph.pb")
+CHECKPOINT_DIR = os.path.join(os.path.dirname(__file__), "models")
 
 
 class Extractor:
@@ -12,7 +16,7 @@ class Extractor:
     def load_pb(self):
         graph = tf.Graph()
         self.sess = tf.Session(graph=graph)
-        with tf.gfile.FastGFile("deepbrain/models/graph.pb", 'rb') as f:
+        with tf.gfile.FastGFile(PB_FILE, 'rb') as f:
             graph_def = tf.GraphDef()
             graph_def.ParseFromString(f.read())
             with self.sess.graph.as_default():
@@ -26,7 +30,7 @@ class Extractor:
 
     def load_ckpt(self):
         self.sess = tf.Session()
-        ckpt_path = tf.train.latest_checkpoint("./deepbrain/models/")
+        ckpt_path = tf.train.latest_checkpoint(CHECKPOINT_DIR)
         saver = tf.train.import_meta_graph('{}.meta'.format(ckpt_path))
         saver.restore(self.sess, ckpt_path)
 
