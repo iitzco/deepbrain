@@ -11,7 +11,7 @@ class Extractor:
 
     def load(self):
         self.sess = tf.Session()
-        ckpt_path = tf.train.latest_checkpoint("./models/")
+        ckpt_path = tf.train.latest_checkpoint("./deepbrain/models/")
         saver = tf.train.import_meta_graph('{}.meta'.format(ckpt_path))
         saver.restore(self.sess, ckpt_path)
 
