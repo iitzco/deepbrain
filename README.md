@@ -2,7 +2,7 @@
 
 > Brain image processing tools using Deep Learning focused on speed and accuracy.
 
-## How to install
+### How to install
 
 ```bash
 $ pip install deepbrain
@@ -10,7 +10,7 @@ $ pip install deepbrain
 
 #### Available tools:
 
-## Extractor
+# Extractor
 
 ![img](./imgs/extractor.png)
 
