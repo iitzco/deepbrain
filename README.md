@@ -73,3 +73,8 @@ mask = prob > 0.5
 ```
 
 See `deepbrain-extractor -h` for more information.
+
+
+## Future Tools:
+
+* Brain T1 tissue segmentation [WORK IN PROGRESS]
