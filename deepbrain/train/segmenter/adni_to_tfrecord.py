@@ -59,7 +59,7 @@ def parse_example(img_path, brain_path, labels_path):
     img_np = img_np.astype(np.uint8)
     img_np[brain_np <= 0.5] = 0 # Strip brain
 
-    labels_np = labels_np.astype(np.uint)
+    labels_np = labels_np.astype(np.uint8)
 
     tf_ex = tf.train.Example(features=tf.train.Features(feature={
             'dims': int64_list_feature(dims),

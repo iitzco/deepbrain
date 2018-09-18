@@ -30,22 +30,22 @@ def load_dataset(filename, size=None):
     dataset = tf.data.TFRecordDataset(filename)
     dataset = dataset.map(decode)
     dataset = dataset.map(normalize)
-    dataset = dataset.map(to_one_hot)
     dataset = dataset.map(expand_dims)
+    dataset = dataset.map(to_one_hot)
 
     return dataset
 
 
 def expand_dims(img, labels, dims):
     img = tf.expand_dims(img, axis=-1)
-
     return img, labels, dims
 
 
 def to_one_hot(img, labels, dims):
     aux = tf.reshape(labels, [-1])
     one_hot = tf.one_hot(aux, LABELS)
-    one_hot_labels = tf.reshape(one_hot, [SIZE, SIZE, SIZE, -1])
+    one_hot_labels = tf.reshape(one_hot, [SIZE, SIZE, SIZE, LABELS])
+    one_hot_labels = tf.cast(one_hot_labels, tf.bool)
 
     return img, one_hot_labels, dims
 

@@ -19,8 +19,8 @@ def model(img, labels, dims):
 
     out = tf.cast(input_, dtype=tf.float32)
     
-    out = tf.layers.conv3d(out, filters=16, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=16, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=8, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=8, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     conv1 = out
 
@@ -28,8 +28,8 @@ def model(img, labels, dims):
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=16, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=16, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     conv2 = out
 
@@ -37,8 +37,8 @@ def model(img, labels, dims):
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     conv3 = out
 
@@ -46,63 +46,49 @@ def model(img, labels, dims):
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    out = tf.layers.conv3d_transpose(out, filters=64, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
-    out = tf.concat((out, conv3), axis=-1)
-    out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-
-    out = tf.layers.dropout(out, rate=0.3, training=training)
-
     out = tf.layers.conv3d_transpose(out, filters=32, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
-    out = tf.concat((out, conv2), axis=-1)
+    out = tf.concat((out, conv3), axis=-1)
     out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
     out = tf.layers.conv3d_transpose(out, filters=16, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
-    out = tf.concat((out, conv1), axis=-1)
+    out = tf.concat((out, conv2), axis=-1)
     out = tf.layers.conv3d(out, filters=16, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+
+    out = tf.layers.dropout(out, rate=0.3, training=training)
+
+    out = tf.layers.conv3d_transpose(out, filters=8, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.concat((out, conv1), axis=-1)
+    out = tf.layers.conv3d(out, filters=8, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
     out = tf.layers.conv3d(out, filters=LABELS, kernel_size=1, kernel_initializer=init, padding="same")
 
-    # sigm_out = tf.nn.sigmoid(out, name="prob")
+    softmax_out = tf.nn.softmax(out, name="softmax")
 
-    # threshold = tf.multiply(tf.ones_like(mask, dtype=tf.float32), 0.5)
-    # pred = tf.greater(sigm_out, threshold, "pred")
-    # mask_bool = tf.greater(tf.cast(mask, dtype=tf.float32), threshold)
+    loss = tf.nn.softmax_cross_entropy_with_logits(labels=labels, logits=out)
+    loss = tf.reduce_mean(loss)
 
-    # _and = tf.logical_and(pred, mask_bool)
-    # _or = tf.logical_or(pred, mask_bool)
-
-    # _and = tf.reduce_sum(tf.cast(_and, tf.float32), axis=[1, 2, 3, 4])
-    # _or = tf.reduce_sum(tf.cast(_or, tf.float32), axis=[1, 2, 3, 4])
-
-    # iou = tf.reduce_mean(_and / _or)
-    # tf.summary.scalar("iou", iou)
-
-    # pred_sum = tf.reduce_sum(tf.cast(pred, tf.float32), axis=[1, 2, 3, 4])
-    # mask_bool_sum = tf.reduce_sum(tf.cast(mask_bool, tf.float32), axis=[1, 2, 3, 4])
-
-    # dice = tf.reduce_mean(2*_and / (pred_sum + mask_bool_sum))
-    # tf.summary.scalar("dice", dice)
-
-    # loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.cast(mask, tf.float32), logits=out)
-    # loss = tf.reduce_mean(loss)
-
-    # tf.summary.scalar("loss", loss)
+    tf.summary.scalar("loss", loss)
     
-    # update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    # with tf.control_dependencies(update_ops):
-    #     upd = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
+    global_step = tf.Variable(0, trainable=False)
+    starter_learning_rate = 0.001
+    learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 10000, 0.96, staircase=True)
+
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+
+    with tf.control_dependencies(update_ops):
+        upd = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss, global_step=global_step)
         
-    # merged = tf.summary.merge_all()
+    merged = tf.summary.merge_all()
     
-    # return training, img, mask, out, merged, upd
+    return training, img, labels, out, merged, upd
 
 
 def load_iterators(train_dataset, val_dataset):
-    batch_size = 5
+    batch_size = 1
 
     train_dataset = train_dataset.shuffle(batch_size)
     train_dataset = train_dataset.repeat()
@@ -134,7 +120,7 @@ def run():
 
     handle, training_iterator, validation_iterator, next_element = load_iterators(train_dataset, val_dataset)
 
-    training, img, mask, out, merged, upd = model(*next_element)
+    training, img, labels, out, merged, upd = model(*next_element)
 
     saver = tf.train.Saver(max_to_keep=2)
 
