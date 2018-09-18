@@ -15,18 +15,27 @@ def run():
     _dir = ADNI_DATASET_DIR
 
     labels = Path(os.path.join(_dir, "masks", "malpem"))
+    brains = Path(os.path.join(_dir, "masks", "brain_masks"))
     
     ret = {}
 
     index = 0
 
     for each in os.listdir(labels):
+        aux = each[7:]
+
         p = labels / each
+        b = brains / aux
+
         img = nib.load(str(p))
+        brain = (nib.load(str(b)).get_fdata().squeeze()) == 1
 
         x = img.get_fdata()
-        x = x.astype(np.uint8)
-        x = np.reshape(x, (-1))
+        x = x.astype(np.uint8).squeeze()
+
+        assert x.shape == brain.shape
+
+        x = x[brain]
 
         y = np.bincount(x)
         ii = np.nonzero(y)[0]
