@@ -75,8 +75,22 @@ def model(img, labels, dims):
     softmax_out = tf.nn.softmax(out, name="softmax")
 
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.cast(tf.squeeze(labels, axis=-1), tf.int32), logits=out)
+
+    # Ignore background
+    brain_mask = tf.greater(img, 0.5)
+
+    loss = loss * tf.cast(brain_mask, tf.float32)
+
     loss = tf.reduce_mean(loss)
 
+    pred = tf.cast(tf.argmax(out, axis=-1, name="pred"), tf.uint8)
+    pred = tf.boolean_mask(pred, brain_mask)
+    labels2 = tf.boolean_mask(tf.squeeze(labels), brain_mask)
+    correct_pred = tf.equal(pred, labels2)
+
+    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+    
+    tf.summary.scalar("acc", accuracy)
     tf.summary.scalar("loss", loss)
     
     global_step = tf.Variable(0, trainable=False)
