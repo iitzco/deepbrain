@@ -77,10 +77,9 @@ def model(img, labels, dims):
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=tf.cast(tf.squeeze(labels, axis=-1), tf.int32), logits=out)
 
     # Ignore background
-    brain_mask = tf.greater(img, 0.5)
+    brain_mask = tf.squeeze(tf.greater(img, 0), axis=-1)
 
-    loss = loss * tf.cast(brain_mask, tf.float32)
-
+    loss = tf.boolean_mask(loss, brain_mask)
     loss = tf.reduce_mean(loss)
 
     pred = tf.cast(tf.argmax(out, axis=-1, name="pred"), tf.uint8)
