@@ -31,7 +31,11 @@ def load_dataset(filename, size=None):
     dataset = dataset.map(decode)
     dataset = dataset.map(normalize)
     dataset = dataset.map(expand_dims)
-    dataset = dataset.map(to_one_hot)
+
+    # Sparse softmax does not require one_hot
+    # dataset = dataset.map(to_one_hot)
+    # Instead: 
+    dataset = dataset.map(expand_labels)
 
     return dataset
 
@@ -41,11 +45,15 @@ def expand_dims(img, labels, dims):
     return img, labels, dims
 
 
+def expand_labels(img, labels, dims):
+    labels = tf.expand_dims(labels, axis=-1)
+    return img, labels, dims
+
+
 def to_one_hot(img, labels, dims):
     aux = tf.reshape(labels, [-1])
-    one_hot = tf.one_hot(aux, LABELS)
+    one_hot = tf.one_hot(aux, LABELS, dtype=tf.uint8)
     one_hot_labels = tf.reshape(one_hot, [SIZE, SIZE, SIZE, LABELS])
-    one_hot_labels = tf.cast(one_hot_labels, tf.bool)
 
     return img, one_hot_labels, dims
 
