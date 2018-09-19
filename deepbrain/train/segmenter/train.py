@@ -6,6 +6,7 @@ from halo import Halo
 
 from const import SIZE, LABELS
 from dataset import load_all_datasets
+from frequence import FREQ_LIST
 
 
 def model(img, labels, dims):
@@ -19,9 +20,9 @@ def model(img, labels, dims):
 
     out = tf.cast(input_, dtype=tf.float32)
     
-    out = tf.layers.conv3d(out, filters=16, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=16, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=16, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     conv1 = out
 
@@ -29,9 +30,9 @@ def model(img, labels, dims):
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     conv2 = out
 
@@ -39,9 +40,9 @@ def model(img, labels, dims):
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     conv3 = out
 
@@ -49,24 +50,24 @@ def model(img, labels, dims):
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    out = tf.layers.conv3d_transpose(out, filters=64, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.layers.conv3d_transpose(out, filters=128, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
     out = tf.concat((out, conv3), axis=-1)
+    out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+
+    out = tf.layers.dropout(out, rate=0.3, training=training)
+
+    out = tf.layers.conv3d_transpose(out, filters=64, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.concat((out, conv2), axis=-1)
     out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
     out = tf.layers.conv3d(out, filters=64, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
     out = tf.layers.conv3d_transpose(out, filters=32, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
-    out = tf.concat((out, conv2), axis=-1)
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-
-    out = tf.layers.dropout(out, rate=0.3, training=training)
-
-    out = tf.layers.conv3d_transpose(out, filters=16, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
     out = tf.concat((out, conv1), axis=-1)
-    out = tf.layers.conv3d(out, filters=16, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=16, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
@@ -79,12 +80,19 @@ def model(img, labels, dims):
     # Ignore background
     brain_mask = tf.squeeze(tf.greater(img, 0), axis=-1)
 
+    freq = tf.constant(FREQ_LIST, dtype=tf.float32)
+    weights = 1 / freq
+    
     loss = tf.boolean_mask(loss, brain_mask)
+    labels2 = tf.boolean_mask(tf.squeeze(labels), brain_mask)
+
+    w = tf.gather(weights, tf.cast(labels2, tf.int32))
+
+    loss = tf.multiply(w, loss)
     loss = tf.reduce_mean(loss)
 
     pred = tf.cast(tf.argmax(out, axis=-1, name="pred"), tf.uint8)
     pred = tf.boolean_mask(pred, brain_mask)
-    labels2 = tf.boolean_mask(tf.squeeze(labels), brain_mask)
     correct_pred = tf.equal(pred, labels2)
 
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
