@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from halo import Halo
 
-from const import SIZE, LABELS
+from const import SIZE, LABELS, FILTERED_LABELS
 from dataset import load_all_datasets
 from frequence import FREQ_LIST
 
@@ -44,16 +44,16 @@ def model(img, labels, dims):
     out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
     out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
-    conv3 = out
+    # conv3 = out
 
-    out = tf.layers.max_pooling3d(out, pool_size=2, strides=2)
+    # out = tf.layers.max_pooling3d(out, pool_size=2, strides=2)
 
-    out = tf.layers.dropout(out, rate=0.3, training=training)
+    # out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    out = tf.layers.conv3d_transpose(out, filters=128, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
-    out = tf.concat((out, conv3), axis=-1)
-    out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    # out = tf.layers.conv3d_transpose(out, filters=128, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    # out = tf.concat((out, conv3), axis=-1)
+    # out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    # out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
@@ -71,7 +71,7 @@ def model(img, labels, dims):
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    out = tf.layers.conv3d(out, filters=LABELS, kernel_size=1, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=FILTERED_LABELS, kernel_size=1, kernel_initializer=init, padding="same")
 
     softmax_out = tf.nn.softmax(out, name="softmax")
 
@@ -80,15 +80,15 @@ def model(img, labels, dims):
     # Ignore background
     brain_mask = tf.squeeze(tf.greater(img, 0), axis=-1)
 
-    freq = tf.constant(FREQ_LIST, dtype=tf.float32)
-    weights = 1 / freq
+    # freq = tf.constant(FREQ_LIST, dtype=tf.float32)
+    # weights = 1 / freq
     
     loss = tf.boolean_mask(loss, brain_mask)
     labels2 = tf.boolean_mask(tf.squeeze(labels), brain_mask)
 
-    w = tf.gather(weights, tf.cast(labels2, tf.int32))
+    # w = tf.gather(weights, tf.cast(labels2, tf.int32))
 
-    loss = tf.multiply(w, loss)
+    # loss = tf.multiply(w, loss)
     loss = tf.reduce_mean(loss)
 
     pred = tf.cast(tf.argmax(out, axis=-1, name="pred"), tf.uint8)

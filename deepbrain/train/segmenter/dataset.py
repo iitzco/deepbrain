@@ -32,12 +32,54 @@ def load_dataset(filename, size=None):
     dataset = dataset.map(normalize)
     dataset = dataset.map(expand_dims)
 
+    dataset = dataset.map(shrink_labels)
+
     # Sparse softmax does not require one_hot
     # dataset = dataset.map(to_one_hot)
     # Instead: 
     dataset = dataset.map(expand_labels)
 
     return dataset
+
+
+# CSF: 1, 2, 23, 24, 0, 18 -> 1
+# WM: 16, 17 -> 2
+# GM: Rest -> 3
+# Brain Stem: 7 -> 4
+# Cerebellum WM: 12, 13 -> 5
+# Cerebellum GM: 10, 11, 36, 37, 38 -> 6
+def shrink_labels(img, labels, dims):
+    new_labels = tf.zeros_like(labels)
+
+    def c(v):
+        return tf.constant(v, dtype=tf.uint8)
+
+    def f(values):
+        ret = None
+        for v in values:
+            co = c(v)
+            if ret is None:
+                ret = tf.equal(labels, co)
+            else:
+                ret = tf.logical_or(ret, tf.equal(labels, co))
+        return tf.cast(ret, tf.uint8)
+
+    csf = tf.scalar_mul(c(1), f([1,2,23, 24, 0, 18]))
+    wm = tf.scalar_mul(c(2), f([16, 17]))
+    gm = tf.scalar_mul(c(3), f(set(range(LABELS)) - set([1,2,23,24,0,18,16,17,7,12,13,10,11,36,37,38])))
+    bs = tf.scalar_mul(c(4), f([7]))
+    cwm = tf.scalar_mul(c(5), f([12, 13]))
+    cgm = tf.scalar_mul(c(6), f([10, 11, 36, 37, 38]))
+
+    new_labels = tf.add(new_labels, csf)
+    new_labels = tf.add(new_labels, wm)
+    new_labels = tf.add(new_labels, gm)
+    new_labels = tf.add(new_labels, bs)
+    new_labels = tf.add(new_labels, cwm)
+    new_labels = tf.add(new_labels, cgm)
+
+    return img, new_labels, dims
+
 
 
 def expand_dims(img, labels, dims):
