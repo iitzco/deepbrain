@@ -3,15 +3,16 @@ import numpy as np
 from skimage.transform import resize
 import os
 
-PB_FILE = os.path.join(os.path.dirname(__file__), "models", "extractor", "graph_v2.pb")
-CHECKPOINT_DIR = os.path.join(os.path.dirname(__file__), "models", "extractor", "v2")
+PB_FILE = os.path.join(os.path.dirname(__file__), "models", "segmenter", "graph.pb")
+# CHECKPOINT_DIR = os.path.join(os.path.dirname(__file__), "models", "segmenter")
+CHECKPOINT_DIR = "/Users/ivanitz/Projects/cerebro/deepbrain/deepbrain/models/segmenter/"
 
 
-class Extractor:
+class Segmenter:
 
     def __init__(self):
         self.SIZE = 128
-        self.load_pb()
+        self.load_ckpt()
 
     def load_pb(self):
         graph = tf.Graph()
@@ -25,8 +26,7 @@ class Extractor:
         self.img = graph.get_tensor_by_name("import/img:0")
         self.training = graph.get_tensor_by_name("import/training:0")
         self.dim = graph.get_tensor_by_name("import/dim:0")
-        self.prob = graph.get_tensor_by_name("import/prob:0")
-        self.pred = graph.get_tensor_by_name("import/pred:0")
+        self.prob = graph.get_tensor_by_name("import/softmax:0")
 
     def load_ckpt(self):
         self.sess = tf.Session()
@@ -39,8 +39,7 @@ class Extractor:
         self.img = g.get_tensor_by_name("img:0")
         self.training = g.get_tensor_by_name("training:0")
         self.dim = g.get_tensor_by_name("dim:0")
-        self.prob = g.get_tensor_by_name("prob:0")
-        self.pred = g.get_tensor_by_name("pred:0")
+        self.prob = g.get_tensor_by_name("softmax:0")
 
     def run(self, image):
         shape = image.shape
@@ -53,3 +52,21 @@ class Extractor:
         return prob
 
 
+if __name__ == "__main__":
+    import sys
+    import nibabel as nib
+    import time
+
+    seg = Segmenter()
+
+    img = nib.load(sys.argv[1])
+
+    affine = img.affine
+    img = img.get_fdata()
+
+    now = time.time()
+    prob = seg.run(img)
+    print("Extraction time: {0:.2f} secs.".format(time.time() - now))
+    labels = np.argmax(prob, axis=-1)
+    out = nib.Nifti1Image(labels, affine)
+    nib.save(out, os.path.join(sys.argv[2], "seg.nii"))
