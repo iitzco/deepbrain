@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from halo import Halo
 
-from const import SIZE, LABELS, FILTERED_LABELS
+from const import SIZE, LABELS, FILTERED_LABELS, LABEL_MAP
 from dataset import load_all_datasets
 from frequence import FREQ_LIST
 
@@ -96,6 +96,13 @@ def model(img, labels, dims):
 
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
     
+    for k, v in LABEL_MAP.items():
+        correct = tf.equal(pred, tf.constant(v, dtype=np.uint8))
+        gt = tf.equal(labels2, tf.constant(v, dtype=np.uint8))
+        intersection = tf.reduce_sum(tf.cast(tf.logical_and(correct, gt), dtype=tf.float32))
+        union = tf.reduce_sum(tf.cast(tf.logical_or(correct, gt), dtype=tf.float32))
+        tf.summary.scalar("iou_{}".format(k), intersection / union)
+    
     tf.summary.scalar("acc", accuracy)
     tf.summary.scalar("loss", loss)
     
@@ -114,7 +121,7 @@ def model(img, labels, dims):
 
 
 def load_iterators(train_dataset, val_dataset):
-    batch_size = 2
+    batch_size = 1
 
     train_dataset = train_dataset.shuffle(batch_size)
     train_dataset = train_dataset.repeat()
