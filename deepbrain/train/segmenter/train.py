@@ -20,9 +20,8 @@ def model(img, labels, dims):
 
     out = tf.cast(input_, dtype=tf.float32)
     
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     conv1 = out
 
@@ -40,9 +39,10 @@ def model(img, labels, dims):
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=128, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=128, kernel_size=7, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=128, kernel_size=7, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=128, kernel_size=7, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=128, kernel_size=7, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     # conv3 = out
 
@@ -64,10 +64,9 @@ def model(img, labels, dims):
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
-    out = tf.layers.conv3d_transpose(out, filters=32, kernel_size=5, strides=2, kernel_initializer=init, padding="same", use_bias=False)
+    out = tf.layers.conv3d_transpose(out, filters=32, kernel_size=3, strides=2, kernel_initializer=init, padding="same", use_bias=False)
     out = tf.concat((out, conv1), axis=-1)
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
-    out = tf.layers.conv3d(out, filters=32, kernel_size=5, activation=tf.nn.relu, kernel_initializer=init, padding="same")
+    out = tf.layers.conv3d(out, filters=32, kernel_size=3, activation=tf.nn.relu, kernel_initializer=init, padding="same")
 
     out = tf.layers.dropout(out, rate=0.3, training=training)
 
@@ -115,7 +114,7 @@ def model(img, labels, dims):
 
 
 def load_iterators(train_dataset, val_dataset):
-    batch_size = 1
+    batch_size = 2
 
     train_dataset = train_dataset.shuffle(batch_size)
     train_dataset = train_dataset.repeat()
