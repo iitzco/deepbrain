@@ -10,6 +10,22 @@ from pathlib import Path
 
 from const import *
 
+# CSF: 1, 2, 23, 24, 0, 18 -> 1
+# WM: 16, 17 -> 2
+# GM: Rest -> 3
+# Brain Stem: 7 -> 4
+# Cerebellum WM: 12, 13 -> 5
+# Cerebellum GM: 10, 11, 36, 37, 38 -> 6
+
+def shrink_labels(labels):
+    labels[np.isin(labels, [1,2,23,24,0,18])] = 1
+    labels[np.isin(labels, [16,17])] = 2
+    labels[~np.isin(labels, [1,2,23,24,0,18,16,17,7,12,13,10,11,36,37,38])] = 3
+    labels[np.isin(labels, [7])] = 4
+    labels[np.isin(labels, [12,13])] = 5
+    labels[np.isin(labels, [10,11,36,37,38])] = 6
+    return labels
+
 
 def run():
     _dir = ADNI_DATASET_DIR
@@ -36,6 +52,7 @@ def run():
         assert x.shape == brain.shape
 
         x = x[brain]
+        x = shrink_labels(x)
 
         y = np.bincount(x)
         ii = np.nonzero(y)[0]
