@@ -56,7 +56,7 @@ See `deepbrain-extractor -h` for more information.
 #### As python
 
 ```python
-import nibabel as nb
+import nibabel as nib
 from deepbrain import Extractor
 
 # Load a nifti as 3d numpy image [H, W, D]
