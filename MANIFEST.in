@@ -1,3 +1,4 @@
 include README.md
 include requirements.txt
-include deepbrain/models/graph.pb
+include deepbrain/models/extractor/graph_v1.pb
+include deepbrain/models/extractor/graph_v2.pb
