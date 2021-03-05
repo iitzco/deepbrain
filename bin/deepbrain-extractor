@@ -17,7 +17,7 @@ def load_arguments():
 
     parser.add_argument("-ii", "--indir", help="input directory having all T1 directories")
     parser.add_argument("-oo", "--outdir", help="out directory to have all stripped directorys")
-    parser.add_argument("-kw", "--keyword", defualt = 'T1_P', help="specify the keyword of T1 files. ")
+    parser.add_argument("-kw", "--keyword", default='T1_P', help="specify the keyword of T1 files. ")
 
     args = parser.parse_args()
     return args
