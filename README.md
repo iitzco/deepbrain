@@ -5,6 +5,8 @@
 
 > Brain image processing tools using Deep Learning focused on speed and accuracy.
 
+Warning: Only support TensorFlow 1.15
+
 ### How to install
 
 ```bash
