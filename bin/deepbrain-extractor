@@ -57,7 +57,7 @@ def dir_run(main_dir, output_dir, keyword, p=0.5):
                 input = file
                 output = os.path.join(output, 't1.nii.gz')
                 print(f'extracting directory {input} to {output}')
-                #run(input, output)
+                run(input, output)
 
 
 if __name__ == "__main__":
