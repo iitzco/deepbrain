@@ -55,7 +55,7 @@ def dir_run(main_dir, output_dir, keyword, p=0.5):
         for file in files: 
             if keyword in file:
                 input = file
-                output = os.path.join(output, os.path.basename(file.lower()))
+                output = os.path.join(output, 't1.nii.gz'))
                 print(f'extracting directory {input} to {output}')
                 #run(input, output)
 
