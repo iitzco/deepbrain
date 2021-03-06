@@ -42,7 +42,7 @@ def run(img_path, output_dir, p=0.5):
     brain = img[:]
     brain[~mask] = 0
     brain = nib.Nifti1Image(brain, affine)
-    nib.save(brain, os.path.join(output_dir, "T1_brain.nii.gz"))
+    nib.save(brain, os.path.join(output_dir, "t1.nii.gz"))
 
 def dir_run(main_dir, output_dir, keyword, p=0.5):
     input_dirs = sorted(glob.glob(os.path.join(main_dir, '*')))
@@ -55,7 +55,6 @@ def dir_run(main_dir, output_dir, keyword, p=0.5):
         for file in files: 
             if keyword.lower() in file.lower():
                 input = file
-                output = os.path.join(output, 't1.nii.gz')
                 print(f'extracting directory {input} to {output}')
                 run(input, output)
 
