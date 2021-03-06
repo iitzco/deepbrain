@@ -56,6 +56,8 @@ def dir_run(main_dir, output_dir, keyword, p=0.5):
             if keyword.lower() in file.lower():
                 input = file
                 print(f'extracting directory {input} to {output}')
+                if not os.path.isdir(output):
+                    os.mkdir(output)
                 run(input, output)
 
 
