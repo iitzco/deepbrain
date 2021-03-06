@@ -50,12 +50,14 @@ def dir_run(main_dir, output_dir, keyword, p=0.5):
     output_dirs = [path.replace(main_dir, output_dir).lower() for path in input_dirs]
 
     for input, output in zip(input_dirs, output_dirs):
+        #print(f'extracting directory {input} to {output}')
         files = glob.glob(os.path.join(input, '*'))
         for file in files: 
             if keyword in file:
-                input = os.path.join(input, file)
-                output = os.path.join(output, file.lower())
-                run(input, output)
+                input = file
+                output = os.path.join(output, os.path.basename(file.lower()))
+                print(f'extracting directory {input} to {output}')
+                #run(input, output)
 
 
 if __name__ == "__main__":
