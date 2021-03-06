@@ -70,7 +70,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
         os.makedirs(args.outdir, exist_ok=True)
-        dir_run(args.input, args.output, args.keyword)
+        dir_run(args.indir, args.outdir, args.keyword)
     else:
         if not args.input:
             print("Should specify input. See -h for instructions.")
