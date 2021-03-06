@@ -47,7 +47,10 @@ def run(img_path, output_dir, p=0.5):
 def dir_run(main_dir, output_dir, keyword, p=0.5):
     input_dirs = sorted(glob.glob(os.path.join(main_dir, '*')))
 
-    output_dirs = [path.replace(main_dir, output_dir).lower() for path in input_dirs]
+    output_dirs = [path.replace(main_dir, output_dir) for path in input_dirs]
+
+    if 'tient' in output_dirs[0]:
+        output_dirs = [path.replace('Patient', 'patient') for path in output_dirs]
 
     for input, output in zip(input_dirs, output_dirs):
         #print(f'extracting directory {input} to {output}')
